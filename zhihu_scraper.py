@@ -257,7 +257,6 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--question",
-        required=True,
         help="The numeric identifier of the Zhihu question to scrape.",
     )
     parser.add_argument(
@@ -280,7 +279,21 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
             "the text is split into a new cell (default: 30000)."
         ),
     )
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+
+    if not args.question:
+        # When the script is executed from an interactive environment (such as
+        # Spyder's "Run file" button) no command-line arguments are supplied.
+        # In that situation we offer a friendly prompt instead of raising an
+        # argparse error straight away.  When stdin is not interactive we keep
+        # the original behaviour so that command line usage still fails fast.
+        if sys.stdin.isatty():
+            prompt = "Enter the Zhihu question ID to scrape: "
+            args.question = input(prompt).strip()
+        if not args.question:
+            parser.error("the --question argument is required")
+
+    return args
 
 
 def main(argv: List[str] | None = None) -> int:
